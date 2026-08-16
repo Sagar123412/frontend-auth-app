@@ -1,8 +1,27 @@
-import { Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
+import { Alert, Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
 import { KeyOutlined, LockFilled, UserOutlined } from "@ant-design/icons";
 import Logo from "../../components/login/icons/Logo";
+import { useMutation } from "@tanstack/react-query";
+import { login } from "../../http/api";
+import type { Credentials } from "../../types";
+
+
+const signin = async (credentials: Credentials) => {
+    const { data } = await login(credentials);
+    return data;
+};
 
 const Login = () => {
+
+    const { mutate, isError, isPending, error } = useMutation({
+        mutationKey: ['login'],
+        mutationFn: signin,
+        onSuccess: (data) => {
+            console.log('Login successful:', data);
+        },
+    });
+
+
     return (
         <Layout style={{ height: '100vh', display: 'grid', placeItems: 'center' }}>
             <Space orientation="vertical" align="center" size="large">
@@ -17,16 +36,27 @@ const Login = () => {
                         Sign in
                     </Space>
                 }
-                    style={{ width: 300 }}>
+                    style={{ width: 300 }}
+                    bordered={false}
+                >
                     <Form
                         initialValues={{
                             remember: true,
                         }}
 
                         onFinish={(values) => {
-                            console.log('Success:', values);
+                            mutate(values);
                         }}
                     >
+                        {
+                            isError && (
+                                <Alert
+                                    style={{ marginBottom: 24 }}
+                                    type="error"
+                                    message={error?.message}
+                                />
+                            )
+                        }
                         <Form.Item
                             name="email"
                             rules={[
@@ -59,7 +89,7 @@ const Login = () => {
                         </Flex>
 
                         <Form.Item label={null}>
-                            <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+                            <Button type="primary" htmlType="submit" style={{ width: '100%' }} loading={isPending}>
                                 Log in
                             </Button>
                         </Form.Item>

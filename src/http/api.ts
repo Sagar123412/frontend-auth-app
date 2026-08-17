@@ -6,4 +6,7 @@ export const login = async (credentials: Credentials) => apiClient.post("/auth/l
 export const self = async () => apiClient.get("/auth/self");
 export const logout = async () => apiClient.post("/auth/logout");
 
+//get all users
+export const getUsers = () => apiClient.get('/users');
+
 

@@ -3,7 +3,7 @@ import { useAuthStore } from "../store"
 import { Avatar, Badge, Dropdown, Flex, Layout, Menu, Space, theme } from "antd";
 import { useState } from "react";
 import Logo from "../components/login/icons/Logo";
-import Icon, { BellFilled } from "@ant-design/icons";
+import Icon, { BellFilled, UsergroupDeleteOutlined } from "@ant-design/icons";
 import { useMutation } from "@tanstack/react-query";
 import { logout } from "../http/api";
 import Home from "../components/login/icons/Home";
@@ -21,7 +21,11 @@ const getMenuItems = (role: string) => {
             icon: <Icon component={Home} />,
             label: <NavLink to="/">Home</NavLink>,
         },
-
+        {
+            key: '/users',
+            icon: <Icon component={UsergroupDeleteOutlined} />,
+            label: <NavLink to="/users">Users</NavLink>,
+        },
         {
             key: '/products',
             icon: <Icon component={foodIcon} />,

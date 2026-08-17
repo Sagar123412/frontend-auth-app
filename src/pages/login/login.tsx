@@ -1,9 +1,11 @@
 import { Alert, Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
 import { KeyOutlined, LockFilled, UserOutlined } from "@ant-design/icons";
 import Logo from "../../components/login/icons/Logo";
-import { useMutation } from "@tanstack/react-query";
-import { login } from "../../http/api";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { login, self, logout } from "../../http/api";
 import type { Credentials } from "../../types";
+import { usePermission } from "../../hooks/usePermission";
+import { useAuthStore } from "../../store";
 
 
 const signin = async (credentials: Credentials) => {
@@ -11,13 +13,53 @@ const signin = async (credentials: Credentials) => {
     return data;
 };
 
+const getSelf = async () => {
+    const { data } = await self();
+    return data;
+};
+
+
 const Login = () => {
+    const { isAllowed } = usePermission();
+    const { setUser, logout: authLogoutStore } = useAuthStore();
+
+
+    const { refetch: refetchSelf } = useQuery({
+        queryKey: ['self'],
+        queryFn: getSelf,
+        enabled: false, // Disable automatic fetching on mount
+    });
+
+    const { mutate: logoutMutate } = useMutation({
+        mutationKey: ['logout'],
+        mutationFn: logout,
+        onSuccess: () => {
+            authLogoutStore();
+        }
+    });
+
 
     const { mutate, isError, isPending, error } = useMutation({
         mutationKey: ['login'],
         mutationFn: signin,
-        onSuccess: (data) => {
-            console.log('Login successful:', data);
+        onSuccess: async (data) => {
+            const selftApiPromise = await refetchSelf();
+
+            // logout or redirect to client ui, if this is a customer
+            // window.location.href = "http://clientui/url"
+            // "admin", "manager", is only allowed to access the admin ui
+
+
+            if (!isAllowed(selftApiPromise.data)) {
+
+                logoutMutate();
+                // logout or redirect to client ui, if this is a customer
+                // window.location.href = "http://clientui/url"
+                return;
+
+            }
+
+            setUser(selftApiPromise.data);
         },
     });
 

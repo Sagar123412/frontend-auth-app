@@ -4,10 +4,9 @@ import { useAuthStore } from "../store";
 function NonAuth() {
     const { user } = useAuthStore();
 
-    if (user) {
-        return <Navigate to="/dashboard" />;
+    if (user && user !== null) {
+        return <Navigate to="/" replace={true} />;
     }
-
     return (
         <div>
             <Outlet />

@@ -11,3 +11,19 @@ export type User = {
     createdAt: string;
     role: string;
 };
+
+export type CreateUserData = {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    role: string;
+    tenantId: number;
+};
+
+
+export type Tenant = {
+    id: number;
+    name: string;
+    address: string;
+};

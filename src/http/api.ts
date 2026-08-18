@@ -1,4 +1,4 @@
-import type { Credentials } from "../types";
+import type { CreateUserData, Credentials } from "../types";
 import apiClient from "./client";
 
 
@@ -10,3 +10,9 @@ export const logout = async () => apiClient.post("/auth/logout");
 export const getUsers = () => apiClient.get('/users');
 
 
+//create a new user
+export const createUser = (userData: CreateUserData) => apiClient.post('/users', userData);
+
+
+//get all tenants
+export const getTenants = () => apiClient.get('/tenants');

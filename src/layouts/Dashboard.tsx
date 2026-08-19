@@ -71,7 +71,7 @@ function Dashboard() {
     const { user } = useAuthStore();
 
     if (!user) {
-        return <Navigate to={"/auth/login"} />
+        return <Navigate to={`/auth/login?returnTo=${location.pathname}`} replace={true} />
     }
 
     const items = getMenuItems(user.role);

@@ -7,7 +7,7 @@ export const self = async () => apiClient.get("/auth/self");
 export const logout = async () => apiClient.post("/auth/logout");
 
 //get all users
-export const getUsers = () => apiClient.get('/users');
+export const getUsers = (queryString: string) => apiClient.get(`/users?${queryString}`);
 
 
 //create a new user

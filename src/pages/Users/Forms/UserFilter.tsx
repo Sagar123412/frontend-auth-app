@@ -1,5 +1,4 @@
-import { PlusOutlined } from "@ant-design/icons"
-import { Card, Col, Input, Row, Select, Button } from "antd"
+import { Card, Col, Input, Row, Select } from "antd"
 
 
 type UsersFilterProps = {

@@ -1,6 +1,6 @@
 import { LoadingOutlined, PlusOutlined, RightOutlined } from "@ant-design/icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Breadcrumb, Button, Drawer, Form, Space, Spin, Table, theme } from "antd";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, theme, Typography } from "antd";
 import { Link, Navigate } from "react-router-dom";
 import { createUser, getUsers } from "../../http/api";
 import type { CreateUserData, User } from "../../types";
@@ -8,6 +8,7 @@ import UserFilter from "./Forms/UserFilter";
 import React from "react";
 import UserForm from "./Forms/UserForm";
 import { useAuthStore } from "../../store";
+import { numberOfRecordPerPage } from "../../constants";
 
 
 
@@ -39,6 +40,14 @@ const columns = [
         dataIndex: 'role',
         key: 'role',
     },
+    {
+        title: 'Restaurant',
+        dataIndex: 'tenant',
+        key: 'tenant',
+        render: (_text: string, record: User) => {
+            return <div>{record.tenant?.name}</div>;
+        },
+    },
 ];
 
 
@@ -50,6 +59,11 @@ export default function User() {
 
     const [drawerOpen, setDrawerOpen] = React.useState(false);
 
+    const [queryParams, setQueryParams] = React.useState({
+        perPage: numberOfRecordPerPage,
+        currentPage: 1,
+    });
+
     const {
         token: { colorBgLayout },
     } = theme.useToken();
@@ -60,14 +74,23 @@ export default function User() {
 
     const {
         data: usersList,
-        isLoading,
+        isFetching,
         isError,
         error,
     } = useQuery({
-        queryKey: ['users'],
+        queryKey: ['users', queryParams],
         queryFn: () => {
-            return getUsers().then((res) => res.data);
+            const filteredParams = Object.fromEntries(
+                Object.entries(queryParams).filter((item) => !!item[1])
+            );
+
+            const queryString = new URLSearchParams(
+                filteredParams as unknown as Record<string, string>
+            ).toString();
+
+            return getUsers(queryString).then((res) => res.data);
         },
+        placeholderData: keepPreviousData,
     });
 
 
@@ -92,23 +115,17 @@ export default function User() {
     return (
         <div>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                <div>
+                <Flex justify="space-between">
                     <Breadcrumb
                         separator={<RightOutlined />}
-                        items={[
-                            {
-                                title: <Link to={'/'}>Dashboard</Link>
-                            },
-                            {
-                                title: <Link to={'/users'}>users</Link>
-                            },
-                        ]}
+                        items={[{ title: <Link to="/">Dashboard</Link> }, { title: 'Users' }]}
                     />
-                </div>
+                    {isFetching && (
+                        <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                    )}
+                    {isError && <Typography.Text type="danger">{error.message}</Typography.Text>}
+                </Flex>
                 <div>
-                    {isLoading && <Spin indicator={<LoadingOutlined spin />} size="medium" />
-                    }
-                    {isError && <div>{error.message}</div>}
 
                     <UserFilter
                         onFilterChange={(filterName: string, filterValue: string) => {
@@ -123,7 +140,27 @@ export default function User() {
                         </Button>
                     </UserFilter>
 
-                    <Table columns={columns} dataSource={usersList?.data || []} />
+                    <Table
+                        columns={columns}
+                        dataSource={usersList?.data || []}
+                        rowKey={'id'}
+                        pagination={{
+                            total: usersList?.total,
+                            pageSize: queryParams.perPage,
+                            current: queryParams.currentPage,
+                            onChange: (page) => {
+                                setQueryParams((prev) => {
+                                    return {
+                                        ...prev,
+                                        currentPage: page,
+                                    };
+                                });
+                            },
+                            showTotal: (total: number, range: number[]) => {
+                                return `Showing ${range[0]}-${range[1]} of ${total} items`;
+                            },
+                        }}
+                    />
                 </div>
 
                 <Drawer

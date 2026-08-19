@@ -1,12 +1,11 @@
 import { Card, Col, Input, Row, Select } from "antd"
-
+import { Form } from "antd";
 
 type UsersFilterProps = {
     children?: React.ReactNode;
-    onFilterChange: (filterName: string, filterValue: string) => void;
 };
 
-function UserFilter({ children, onFilterChange }: UsersFilterProps) {
+function UserFilter({ children }: UsersFilterProps) {
 
     return (
         <Card>
@@ -14,35 +13,36 @@ function UserFilter({ children, onFilterChange }: UsersFilterProps) {
                 <Col span={16}>
                     <Row gutter={20}>
                         <Col span={8}>
-                            <Input.Search
-                                allowClear={true}
-                                placeholder="Search"
-                                onChange={(e) => onFilterChange('searchFilter', e.target.value)}
-                            />
+                            <Form.Item name="q">
+                                <Input.Search
+                                    allowClear={true}
+                                    placeholder="Search"
+                                />
+                            </Form.Item>
                         </Col>
                         <Col span={8}>
-                            <Select
-                                style={{ width: '100%' }}
-                                allowClear={true}
-                                onChange={(selectedItem) =>
-                                    onFilterChange('roleFilter', selectedItem)
-                                }
-                                placeholder="Select role">
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="manager">Manager</Select.Option>
-                                <Select.Option value="customer">Customer</Select.Option>
-                            </Select>
+                            <Form.Item name="role">
+                                <Select
+                                    style={{ width: '100%' }}
+                                    allowClear={true}
+                                    placeholder="Select role">
+                                    <Select.Option value="admin">Admin</Select.Option>
+                                    <Select.Option value="manager">Manager</Select.Option>
+                                    <Select.Option value="customer">Customer</Select.Option>
+                                </Select>
+                            </Form.Item>
                         </Col>
-                        <Col span={8}>
-                            <Select
-                                style={{ width: '100%' }}
-                                allowClear={true}
-                                onChange={(selectedItem) => onFilterChange('statusFilter', selectedItem)}
-                                placeholder="Status">
-                                <Select.Option value="ban">Ban</Select.Option>
-                                <Select.Option value="active">Active</Select.Option>
-                            </Select>
-                        </Col>
+                        {/* <Col span={8}>
+                            <Form.Item name={'status'}>
+                                <Select
+                                    style={{ width: '100%' }}
+                                    allowClear={true}
+                                    placeholder="Status">
+                                    <Select.Option value="ban">Ban</Select.Option>
+                                    <Select.Option value="active">Active</Select.Option>
+                                </Select>
+                            </Form.Item>
+                        </Col> */}
                     </Row>
                 </Col>
                 <Col span={8} style={{ display: 'flex', justifyContent: 'end' }}>

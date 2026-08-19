@@ -3,12 +3,13 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, theme, Typography } from "antd";
 import { Link, Navigate } from "react-router-dom";
 import { createUser, getUsers } from "../../http/api";
-import type { CreateUserData, User } from "../../types";
+import type { CreateUserData, FieldData, User } from "../../types";
 import UserFilter from "./Forms/UserFilter";
 import React from "react";
 import UserForm from "./Forms/UserForm";
 import { useAuthStore } from "../../store";
 import { numberOfRecordPerPage } from "../../constants";
+import { debounce } from "lodash";
 
 
 
@@ -55,6 +56,8 @@ export default function User() {
     const { user } = useAuthStore();
 
     const [form] = Form.useForm();
+    const [userFilterForm] = Form.useForm();
+
     const queryClient = useQueryClient();
 
     const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -71,6 +74,28 @@ export default function User() {
     if (user?.role !== 'admin') {
         return <Navigate to="/" replace={true} />;
     }
+
+    const debouncedQUpdate = React.useMemo(() => {
+        return debounce((value: string | undefined) => {
+            setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }));
+        }, 500);
+    }, []);
+
+
+    const onFilterChange = (changedFields: FieldData[]) => {
+
+        const changedFilterFields = changedFields
+            .map((item) => ({
+                [item.name[0]]: item.value,
+            }))
+            .reduce((acc, item) => ({ ...acc, ...item }), {});
+
+        if ('q' in changedFilterFields) {
+            debouncedQUpdate(changedFilterFields.q);
+        } else {
+            setQueryParams((prev) => ({ ...prev, ...changedFilterFields, currentPage: 1 }));
+        }
+    };
 
     const {
         data: usersList,
@@ -104,6 +129,7 @@ export default function User() {
     });
 
 
+
     const onHandleSubmit = async () => {
         await form.validateFields();
         await userMutate(form.getFieldsValue());
@@ -127,18 +153,16 @@ export default function User() {
                 </Flex>
                 <div>
 
-                    <UserFilter
-                        onFilterChange={(filterName: string, filterValue: string) => {
-                            console.log(filterName, filterValue);
-                        }}
-                    >
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => setDrawerOpen(true)}>
-                            Add User
-                        </Button>
-                    </UserFilter>
+                    <Form form={userFilterForm} onFieldsChange={onFilterChange}>
+                        <UserFilter>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => setDrawerOpen(true)}>
+                                Add User
+                            </Button>
+                        </UserFilter>
+                    </Form>
 
                     <Table
                         columns={columns}

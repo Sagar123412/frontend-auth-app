@@ -2,7 +2,7 @@ import { LoadingOutlined, PlusOutlined, RightOutlined } from "@ant-design/icons"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, theme, Typography } from "antd";
 import { Link, Navigate } from "react-router-dom";
-import { createUser, getUsers } from "../../http/api";
+import { createUser, getUsers, updateUser } from "../../http/api";
 import type { CreateUserData, FieldData, User } from "../../types";
 import UserFilter from "./Forms/UserFilter";
 import React from "react";
@@ -61,6 +61,8 @@ export default function User() {
     const queryClient = useQueryClient();
 
     const [drawerOpen, setDrawerOpen] = React.useState(false);
+    const [currentEditingUser, setCurrentEditingUser] = React.useState<User | null>(null);
+
 
     const [queryParams, setQueryParams] = React.useState({
         perPage: numberOfRecordPerPage,
@@ -80,6 +82,14 @@ export default function User() {
             setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }));
         }, 500);
     }, []);
+
+    React.useEffect(() => {
+        if (currentEditingUser) {
+            console.log('currentEditingUser', currentEditingUser);
+            setDrawerOpen(true);
+            form.setFieldsValue({ ...currentEditingUser, tenantId: currentEditingUser.tenant?.id });
+        }
+    }, [currentEditingUser, form]);
 
 
     const onFilterChange = (changedFields: FieldData[]) => {
@@ -128,12 +138,29 @@ export default function User() {
         },
     });
 
+    const { mutate: updateUserMutation } = useMutation({
+        mutationKey: ['update-user'],
+        mutationFn: async (data: CreateUserData) =>
+            updateUser(data, currentEditingUser!.id).then((res) => res.data),
+        onSuccess: async () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            return;
+        },
+    });
+
+
 
 
     const onHandleSubmit = async () => {
         await form.validateFields();
-        await userMutate(form.getFieldsValue());
+        const isEditMode = !!currentEditingUser;
+        if (isEditMode) {
+            await updateUserMutation(form.getFieldsValue());
+        } else {
+            await userMutate(form.getFieldsValue());
+        }
         form.resetFields();
+        setCurrentEditingUser(null);
         setDrawerOpen(false);
     };
 
@@ -165,7 +192,25 @@ export default function User() {
                     </Form>
 
                     <Table
-                        columns={columns}
+                        columns={[
+                            ...columns,
+                            {
+                                title: 'Actions',
+                                render: (_: string, record: User) => {
+                                    return (
+                                        <Space>
+                                            <Button
+                                                type="link"
+                                                onClick={() => {
+                                                    setCurrentEditingUser(record);
+                                                }}>
+                                                Edit
+                                            </Button>
+                                        </Space>
+                                    );
+                                },
+                            },
+                        ]}
                         dataSource={usersList?.data || []}
                         rowKey={'id'}
                         pagination={{
@@ -188,13 +233,14 @@ export default function User() {
                 </div>
 
                 <Drawer
-                    title="Create user"
+                    title={currentEditingUser ? 'Edit User' : 'Add User'}
                     width={720}
                     styles={{ body: { backgroundColor: colorBgLayout } }}
                     destroyOnClose={true}
                     open={drawerOpen}
                     onClose={() => {
                         form.resetFields();
+                        setCurrentEditingUser(null)
                         setDrawerOpen(false);
                     }}
                     extra={
@@ -202,6 +248,7 @@ export default function User() {
                             <Button
                                 onClick={() => {
                                     form.resetFields();
+                                    setCurrentEditingUser(null)
                                     setDrawerOpen(false);
                                 }}>
                                 Cancel
@@ -212,7 +259,7 @@ export default function User() {
                         </Space>
                     }>
                     <Form layout="vertical" form={form}>
-                        <UserForm />
+                        <UserForm isEditMode={!!currentEditingUser} />
                     </Form>
                 </Drawer>
             </Space>

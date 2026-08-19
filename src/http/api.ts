@@ -16,3 +16,7 @@ export const createUser = (userData: CreateUserData) => apiClient.post('/users',
 
 //get all tenants
 export const getTenants = () => apiClient.get('/tenants');
+
+//update an existing user
+export const updateUser = (user: CreateUserData, id: string) =>
+    apiClient.patch(`users/${id}`, user);

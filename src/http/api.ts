@@ -12,11 +12,12 @@ export const getUsers = (queryString: string) => apiClient.get(`/users?${querySt
 
 //create a new user
 export const createUser = (userData: CreateUserData) => apiClient.post('/users', userData);
-
-
-//get all tenants
-export const getTenants = () => apiClient.get('/tenants');
-
 //update an existing user
 export const updateUser = (user: CreateUserData, id: string) =>
     apiClient.patch(`users/${id}`, user);
+
+//get all tenants
+export const getTenants = (queryParams: string) => apiClient.get(`/tenants?${queryParams}`);
+//creating a new tenant
+export const createTenant = (data: CreateUserData) => apiClient.post('/tenants', data);
+
